@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">AstroWeather</string>
+
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="lodz">Lodz</string>
+
+    //tabs
+
+    <string name="general">General</string>
+    <string name="wind">Wind</string>
+    <string name="nextDays">Next Days</string>
+
+    //general
+
+    <string name="time">Time: </string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="pressure">1021 hPa</string>
+    <string name="description">Sunny</string>
+
+    //wind
+
+    <string name="speed">10 km/h</string>
+    <string name="cloud">Cloudiness: </string>
+    <string name="humidity">Humidity: </string>
+    <string name="visibility">Visibility: </string>
+
+    <string name="add">Add</string>
+    <string name="add_city_to_favorite">Add city to favorite</string>
+    <string name="view">View</string>
+    <string name="delete">Delete</string>
+
+
+</resources>
