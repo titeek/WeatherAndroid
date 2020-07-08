@@ -105,7 +105,8 @@ public class GeneralFragment extends Fragment {
         boolean isConnected = activeNetwork != null &&
                 activeNetwork.isConnectedOrConnecting();
 
-        if(isConnected) { //jest net
+        if(isConnected) {
+            setHasOptionsMenu(true);//jest net
             Log.d("xxx", "Internet Connection!");
 
             compositeDisposable.add(mService.getWeatherByLatLng(
@@ -168,7 +169,9 @@ public class GeneralFragment extends Fragment {
                     })
 
             );
-        } else { //nie ma neta
+        } else {
+            setHasOptionsMenu(false);
+            //nie ma neta
             /*Log.d("XXX", "No Internet connection!");
             Toast toast = Toast.makeText(getActivity(), "No Internet connection!\nWeather may be outdated!", Toast.LENGTH_LONG);
             TextView v = (TextView) toast.getView().findViewById(android.R.id.message); if( v != null) v.setGravity(Gravity.CENTER); toast.show();*/

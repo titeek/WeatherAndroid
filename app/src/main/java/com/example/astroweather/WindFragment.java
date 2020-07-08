@@ -96,7 +96,7 @@ public class WindFragment extends Fragment {
                 activeNetwork.isConnectedOrConnecting();
 
         if(isConnected) {
-
+            setHasOptionsMenu(true);
             compositeDisposable.add(mService.getWeatherByLatLng(
                     String.valueOf(((MainActivity)getActivity()).lat),
                     String.valueOf(((MainActivity)getActivity()).lon),
@@ -149,6 +149,7 @@ public class WindFragment extends Fragment {
             );
 
         } else {
+            setHasOptionsMenu(false);
             Log.d("XXX", "No Internet connection!");
             Toast toast = Toast.makeText(getActivity(), "No Internet connection!\nWeather may be outdated!", Toast.LENGTH_SHORT);
             TextView v = (TextView) toast.getView().findViewById(android.R.id.message); if( v != null) v.setGravity(Gravity.CENTER); toast.show();
