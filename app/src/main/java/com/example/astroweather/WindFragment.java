@@ -1,11 +1,16 @@
 package com.example.astroweather;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -36,6 +41,9 @@ import retrofit2.Retrofit;
  * A simple {@link Fragment} subclass.
  */
 public class WindFragment extends Fragment {
+
+    StringBuilder weatherInformation = new StringBuilder("");
+    String filename = "weatherWind.txt";
 
     TextView speedText, directoryText, humidityText, visibilityText, cloudText;
     //private String unit = "metric";
@@ -78,47 +86,93 @@ public class WindFragment extends Fragment {
 
     private void getWeatherInformation(final String unit) {
 
-        /*compositeDisposable.add(mService.getWeatherByLatLng(String.valueOf(Common.current_location.getLatitude()),
-                String.valueOf(Common.current_location.getLatitude()),*/
+        Context context = (MainActivity)getActivity();
 
-        //cos sie wali z current location...
-        compositeDisposable.add(mService.getWeatherByLatLng(
-                String.valueOf(((MainActivity)getActivity()).lat),
-                String.valueOf(((MainActivity)getActivity()).lon),
-                Common.APP_ID,
-                unit)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<WeatherResult>() {
-                    @Override
-                    public void accept(WeatherResult weatherResult) throws Exception {
+        ConnectivityManager cm =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        if(isConnected) {
+
+            compositeDisposable.add(mService.getWeatherByLatLng(
+                    String.valueOf(((MainActivity)getActivity()).lat),
+                    String.valueOf(((MainActivity)getActivity()).lon),
+                    Common.APP_ID,
+                    unit)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Consumer<WeatherResult>() {
+                        @Override
+                        public void accept(WeatherResult weatherResult) throws Exception {
 
 
-                        //Load info
+                            //Load info
 
-                        if(unit.equals("metric")) {
-                            speedText.setText(new StringBuilder(String.valueOf(weatherResult.getWind().getSpeed())).append("\nm/s"));
-                        } else {
-                            speedText.setText(new StringBuilder(String.valueOf(weatherResult.getWind().getSpeed())).append(" miles/s"));
+                            if(unit.equals("metric")) {
+                                speedText.setText(new StringBuilder(String.valueOf(weatherResult.getWind().getSpeed())).append("\nm/s"));
+                            } else {
+                                speedText.setText(new StringBuilder(String.valueOf(weatherResult.getWind().getSpeed())).append(" miles/s"));
+                            }
+
+                            directoryText.setText(new StringBuilder(windDirection(weatherResult.getWind().getDeg())));
+                            humidityText.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getHumidity())).append("%"));
+                            cloudText.setText(new StringBuilder(String.valueOf(weatherResult.getClouds().getAll())).append("%"));
+                            visibilityText.setText(new StringBuilder(String.valueOf(weatherResult.getVisibility() / 1000)).append(" km"));
+
+                            weatherInformation
+                                    .append(",")
+                                    .append(speedText.getText()).append(",")
+                                    .append(directoryText.getText()).append(",")
+                                    .append(humidityText.getText()).append(",")
+                                    .append(cloudText.getText()).append(",")
+                                    .append(visibilityText.getText()).append(",");
+
+                            Log.d("XXX", weatherInformation.toString());
+
+                            loading.setVisibility(View.GONE);
+                            weatherPanel.setVisibility(View.VISIBLE);
+
+                            ReadWriteClass.writeToFile(weatherInformation.toString(), (MainActivity)getActivity(), filename);
+
+
                         }
+                    }, new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) throws Exception {
+                            //Toast.makeText(getActivity(), ""+throwable.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    })
 
-                        directoryText.setText(new StringBuilder(windDirection(weatherResult.getWind().getDeg())));
-                        humidityText.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getHumidity())).append("%"));
-                        cloudText.setText(new StringBuilder(String.valueOf(weatherResult.getClouds().getAll())).append("%"));
-                        visibilityText.setText(new StringBuilder(String.valueOf(weatherResult.getVisibility() / 1000)).append(" km"));
+            );
 
-                        loading.setVisibility(View.GONE);
-                        weatherPanel.setVisibility(View.VISIBLE);
+        } else {
+            Log.d("XXX", "No Internet connection!");
+            Toast toast = Toast.makeText(getActivity(), "No Internet connection!\nWeather may be outdated!", Toast.LENGTH_SHORT);
+            TextView v = (TextView) toast.getView().findViewById(android.R.id.message); if( v != null) v.setGravity(Gravity.CENTER); toast.show();
 
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Toast.makeText(getActivity(), ""+throwable.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                })
+            String result = ReadWriteClass.readFromFile((MainActivity)getActivity(), filename);
+            if(result.isEmpty()) {
+                Toast.makeText(getActivity(), "Data is not full!", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.d("SSS", result);
+                loading.setVisibility(View.GONE);
+                weatherPanel.setVisibility(View.VISIBLE);
+                String[] informationList = result.split(",");
 
-        );
+                speedText.setText(informationList[1]+"\n");
+                directoryText.setText(informationList[2]);
+                humidityText.setText(informationList[3]);
+                cloudText.setText(informationList[4]);
+                visibilityText.setText(informationList[5]);
+            }
+
+
+
+        }
+
     }
 
     private String windDirection(double windDegrees) {

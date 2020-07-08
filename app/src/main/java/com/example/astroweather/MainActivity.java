@@ -2,24 +2,16 @@ package com.example.astroweather;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager.widget.ViewPager;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.widget.LinearLayout;
-import android.widget.TableLayout;
-import android.widget.Toolbar;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.astroweather.Common.Common;
-import com.example.astroweather.Model.Main;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -97,7 +89,6 @@ public class MainActivity extends AppCompatActivity {
 
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 
-        //Request permission
         Dexter.withActivity(this)
                 .withPermissions(Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.ACCESS_FINE_LOCATION)
@@ -134,7 +125,6 @@ public class MainActivity extends AppCompatActivity {
                 super.onLocationResult(locationResult);
 
                 Common.current_location = locationResult.getLastLocation();
-
                 //Log
                 //Log.d("LocationXXX", locationResult.getLastLocation().getLatitude()+"/"+locationResult.getLastLocation().getLongitude());
                 Log.d("Location", String.valueOf(Common.current_location.getLatitude()));

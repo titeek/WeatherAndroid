@@ -1,6 +1,9 @@
 package com.example.astroweather;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -9,6 +12,7 @@ import androidx.fragment.app.Fragment;
 
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -29,7 +33,12 @@ import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -43,6 +52,7 @@ public class GeneralFragment extends Fragment {
 
     private Handler handlerTime = new Handler();
 
+    String filename = "weatherGeneral.txt";
 
     ImageView imageWeather;
     TextView coordText, cityText, temperatureText, pressureText, descriptionText;
@@ -52,7 +62,7 @@ public class GeneralFragment extends Fragment {
 
     IOpenWeatherMap mService;
     CompositeDisposable compositeDisposable;
-
+    StringBuilder weatherInformation = new StringBuilder("");
 
     public GeneralFragment() {
         compositeDisposable = new CompositeDisposable();
@@ -86,63 +96,101 @@ public class GeneralFragment extends Fragment {
 
     private void getWeatherInformation(final String unit) {
 
-        /*compositeDisposable.add(mService.getWeatherByLatLng(String.valueOf(((MainActivity)getActivity()).lat),
-                 String.valueOf(((MainActivity)getActivity()).lon),*/
+        Context context = (MainActivity)getActivity();
 
-        //cos sie wali z current location...
+        ConnectivityManager cm =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-         compositeDisposable.add(mService.getWeatherByLatLng(
-                 String.valueOf(((MainActivity)getActivity()).lat),
-                 String.valueOf(((MainActivity)getActivity()).lon),
-                 Common.APP_ID,
-                 unit)
-                 .subscribeOn(Schedulers.io())
-                 .observeOn(AndroidSchedulers.mainThread())
-                 .subscribe(new Consumer<WeatherResult>() {
-                     @Override
-                     public void accept(WeatherResult weatherResult) throws Exception {
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
 
-                         //Load image
-                         Picasso.get().load(new StringBuilder("https://openweathermap.org/img/wn/")
-                                 .append(weatherResult.getWeather().get(0).getIcon())
-                         .append(".png").toString()).into(imageWeather);
+        if(isConnected) { //jest net
+            Log.d("xxx", "Internet Connection!");
 
-                         //Load info
-                         cityText.setText(weatherResult.getName());
+            compositeDisposable.add(mService.getWeatherByLatLng(
+                    String.valueOf(((MainActivity)getActivity()).lat),
+                    String.valueOf(((MainActivity)getActivity()).lon),
+                    Common.APP_ID,
+                    unit)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Consumer<WeatherResult>() {
+                        @Override
+                        public void accept(WeatherResult weatherResult) throws Exception {
 
-                         descriptionText.setText(new StringBuilder(weatherResult.getWeather().get(0).getDescription()));
+                            //Load image
+                            Picasso.get().load(new StringBuilder("https://openweathermap.org/img/wn/")
+                                    .append(weatherResult.getWeather().get(0).getIcon())
+                                    .append(".png").toString()).into(imageWeather);
 
-                         if(unit.equals("metric")) {
-                             temperatureText.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getTemp()))
-                                     .append("°C"));
-                         } else {
-                             temperatureText.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getTemp()))
-                                     .append("°F"));
-                         }
+                            //Load info
+                            cityText.setText(weatherResult.getName());
+
+                            descriptionText.setText(new StringBuilder(weatherResult.getWeather().get(0).getDescription()));
+
+                            if(unit.equals("metric")) {
+                                temperatureText.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getTemp()))
+                                        .append("°C"));
+                            } else {
+                                temperatureText.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getTemp()))
+                                        .append("°F"));
+                            }
+
+                            pressureText.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getPressure()))
+                                    .append(" hPa").toString());
+
+                            coordText.setText(new StringBuilder("").append(weatherResult.getCoord().toString()).append("").toString());
+
+                            weatherInformation
+                                    .append(",")
+                                    .append(cityText.getText()).append(",")
+                                    .append(descriptionText.getText()).append(",")
+                                    .append(temperatureText.getText()).append(",")
+                                    .append(pressureText.getText()).append(",")
+                                    .append(coordText.getText()).append(",");
+
+                            Log.d("XXX", weatherInformation.toString());
+
+                            loading.setVisibility(View.GONE);
+                            weatherPanel.setVisibility(View.VISIBLE);
+
+                            ReadWriteClass.writeToFile(weatherInformation.toString(), (MainActivity)getActivity(), filename);
 
 
-                         pressureText.setText(new StringBuilder(String.valueOf(weatherResult.getMain().getPressure()))
-                         .append(" hPa").toString());
 
+                        }
+                    }, new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) throws Exception {
+                            //Toast.makeText(getActivity(), ""+throwable.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    })
 
+            );
+        } else { //nie ma neta
+            /*Log.d("XXX", "No Internet connection!");
+            Toast toast = Toast.makeText(getActivity(), "No Internet connection!\nWeather may be outdated!", Toast.LENGTH_LONG);
+            TextView v = (TextView) toast.getView().findViewById(android.R.id.message); if( v != null) v.setGravity(Gravity.CENTER); toast.show();*/
 
-                         coordText.setText(new StringBuilder("").append(weatherResult.getCoord().toString()).append("").toString());
+            String result = ReadWriteClass.readFromFile((MainActivity)getActivity(), filename);
+            if(result.isEmpty()) {
+                Toast.makeText(getActivity(), "Data is not full!", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.d("SSS", result);
+                loading.setVisibility(View.GONE);
+                weatherPanel.setVisibility(View.VISIBLE);
+                String[] informationList = result.split(",");
 
-                         loading.setVisibility(View.GONE);
-                         weatherPanel.setVisibility(View.VISIBLE);
+                cityText.setText(informationList[1]);
+                descriptionText.setText(informationList[2]);
+                temperatureText.setText(informationList[3]);
+                pressureText.setText(informationList[4]);
+                coordText.setText(informationList[5]);
+            }
 
+        }
 
-
-
-                     }
-                 }, new Consumer<Throwable>() {
-                     @Override
-                     public void accept(Throwable throwable) throws Exception {
-                         Toast.makeText(getActivity(), ""+throwable.getMessage(), Toast.LENGTH_LONG).show();
-                     }
-                 })
-
-         );
     }
 
     @Override
@@ -198,7 +246,6 @@ public class GeneralFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        //showParameters(astroCalculator);
         handlerTime.postDelayed(updateTime, 1);
     }
 }

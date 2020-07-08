@@ -2,12 +2,15 @@ package com.example.astroweather;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -38,6 +41,9 @@ import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 
 public class NextDaysFragment extends Fragment {
+
+    StringBuilder weatherInformation = new StringBuilder("");
+    String filename = "weatherForecast.txt";
 
     ImageView nextDayOneWeatherImage, nextDayTwoWeatherImage, nextDayThreeWeatherImage, nextDayFourWeatherImage;
     TextView nextDayOneText, nextDayTwoText, nextDayThreeText, nextDayFourText;
@@ -87,36 +93,91 @@ public class NextDaysFragment extends Fragment {
         return itemView;
     }
 
+
     private void getForecastWeatherInformation(final String unit) {
-        /*compositeDisposable.add(mService.getWeatherByLatLng(String.valueOf(Common.current_location.getLatitude()),
-                String.valueOf(Common.current_location.getLatitude()),*/
 
-        //cos sie wali z current location...
-        compositeDisposable.add(mService.getForecastWeatherByLatLng(
-                String.valueOf(((MainActivity)getActivity()).lat),
-                String.valueOf(((MainActivity)getActivity()).lon),
-                Common.APP_ID,
-                unit)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<WeatherForecastResult>() {
-                    @Override
-                    public void accept(WeatherForecastResult weatherForecastResult) throws Exception {
+        Context context = (MainActivity)getActivity();
 
-                       displayWeatherForecast(weatherForecastResult, unit);
+        ConnectivityManager cm =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-                    }
-                }, new Consumer<Throwable>() {
-                    @Override
-                    public void accept(Throwable throwable) throws Exception {
-                        Toast.makeText(getActivity(), ""+throwable.getMessage(), Toast.LENGTH_LONG).show();
-                        Log.d("xxx", ""+throwable.getMessage());
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        if(isConnected) {
+
+            compositeDisposable.add(mService.getForecastWeatherByLatLng(
+                    String.valueOf(((MainActivity)getActivity()).lat),
+                    String.valueOf(((MainActivity)getActivity()).lon),
+                    Common.APP_ID,
+                    unit)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Consumer<WeatherForecastResult>() {
+                        @Override
+                        public void accept(WeatherForecastResult weatherForecastResult) throws Exception {
 
 
-                    }
-                })
+                            //Load info
+                            displayWeatherForecast(weatherForecastResult, unit);
 
-        );
+                            weatherInformation
+                                    .append(",")
+                                    .append(nextDayOneTempText.getText()).append(",")
+                                    .append(nextDayTwoTempText.getText()).append(",")
+                                    .append(nextDayThreeTempText.getText()).append(",")
+                                    .append(nextDayFourTempText.getText()).append(",")
+                                    .append(nextDayOneText.getText()).append(",")
+                                    .append(nextDayTwoText.getText()).append(",")
+                                    .append(nextDayThreeText.getText()).append(",")
+                                    .append(nextDayFourText.getText()).append(",");
+
+                            Log.d("XXX", weatherInformation.toString());
+
+                            ReadWriteClass.writeToFile(weatherInformation.toString(), (MainActivity)getActivity(), filename);
+
+
+                        }
+                    }, new Consumer<Throwable>() {
+                        @Override
+                        public void accept(Throwable throwable) throws Exception {
+                            //Toast.makeText(getActivity(), ""+throwable.getMessage(), Toast.LENGTH_LONG).show();
+                            Log.d("xxx", ""+throwable.getMessage());
+
+
+                        }
+                    })
+
+            );
+
+        } else {
+            /*Log.d("XXX", "No Internet connection!");
+            Toast toast = Toast.makeText(getActivity(), "No Internet connection!\nWeather may be outdated!", Toast.LENGTH_SHORT);
+            TextView v = (TextView) toast.getView().findViewById(android.R.id.message); if( v != null) v.setGravity(Gravity.CENTER); toast.show();*/
+
+            String result = ReadWriteClass.readFromFile((MainActivity)getActivity(), filename);
+            if(result.isEmpty()) {
+                Toast.makeText(getActivity(), "Data is not full!", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.d("SSS", result);
+                loading.setVisibility(View.GONE);
+                weatherPanel.setVisibility(View.VISIBLE);
+                String[] informationList = result.split(",");
+
+                nextDayOneTempText.setText(informationList[1]);
+                nextDayTwoTempText.setText(informationList[2]);
+                nextDayThreeTempText.setText(informationList[3]);
+                nextDayFourTempText.setText(informationList[4]);
+                nextDayOneText.setText(informationList[5]);
+                nextDayTwoText.setText(informationList[6]);
+                nextDayThreeText.setText(informationList[7]);
+                nextDayFourText.setText(informationList[8]);
+            }
+
+
+
+        }
 
     }
 
