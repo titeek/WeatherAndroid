@@ -2,6 +2,9 @@ package com.example.astroweather;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -32,6 +35,9 @@ import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -42,8 +48,14 @@ import retrofit2.Retrofit;
 
 public class NextDaysFragment extends Fragment {
 
-    StringBuilder weatherInformation = new StringBuilder("");
-    String filename = "weatherForecast.txt";
+    private StringBuilder weatherInformation = new StringBuilder("");
+    private String filename = "weatherForecast.txt";
+    private String directory;
+    private String filenameImg1 = "weather1.jpg";
+    private String filenameImg2 = "weather2.jpg";
+    private String filenameImg3 = "weather3.jpg";
+    private String filenameImg4 = "weather4.jpg";
+    private String path = "/data/user/0/com.example.astroweather/app_weatherImages/";
 
     ImageView nextDayOneWeatherImage, nextDayTwoWeatherImage, nextDayThreeWeatherImage, nextDayFourWeatherImage;
     TextView nextDayOneText, nextDayTwoText, nextDayThreeText, nextDayFourText;
@@ -174,6 +186,28 @@ public class NextDaysFragment extends Fragment {
                 nextDayTwoText.setText(informationList[6]);
                 nextDayThreeText.setText(informationList[7]);
                 nextDayFourText.setText(informationList[8]);
+
+                try {
+                    File f = new File(path, filenameImg1);
+                    Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+                    nextDayOneWeatherImage.setImageBitmap(b);
+
+                    f = new File(path, filenameImg2);
+                    b = BitmapFactory.decodeStream(new FileInputStream(f));
+                    nextDayTwoWeatherImage.setImageBitmap(b);
+
+                    f = new File(path, filenameImg3);
+                    b = BitmapFactory.decodeStream(new FileInputStream(f));
+                    nextDayThreeWeatherImage.setImageBitmap(b);
+
+                    f = new File(path, filenameImg4);
+                    b = BitmapFactory.decodeStream(new FileInputStream(f));
+                    nextDayFourWeatherImage.setImageBitmap(b);
+                }
+                catch (FileNotFoundException e)
+                {
+                    e.printStackTrace();
+                }
             }
 
 
@@ -189,19 +223,41 @@ public class NextDaysFragment extends Fragment {
                 .append(weatherForecastResult.daily.get(1).weather.get(0).getIcon())
                 .append(".png").toString()).into(nextDayOneWeatherImage);
 
+        BitmapDrawable drawable1 = (BitmapDrawable) nextDayOneWeatherImage.getDrawable();
+        Bitmap bitmap1 = drawable1.getBitmap();
+
+        directory = ReadWriteClass.saveToInternalStorage((MainActivity)getActivity(), bitmap1, filenameImg1);
+
 
         Picasso.get().load(new StringBuilder("https://openweathermap.org/img/wn/")
                 .append(weatherForecastResult.daily.get(2).weather.get(0).getIcon())
                 .append(".png").toString()).into(nextDayTwoWeatherImage);
 
+        BitmapDrawable drawable2 = (BitmapDrawable) nextDayTwoWeatherImage.getDrawable();
+        Bitmap bitmap2 = drawable2.getBitmap();
+
+        directory = ReadWriteClass.saveToInternalStorage((MainActivity)getActivity(), bitmap2, filenameImg2);
+
         Picasso.get().load(new StringBuilder("https://openweathermap.org/img/wn/")
                 .append(weatherForecastResult.daily.get(3).weather.get(0).getIcon())
                 .append(".png").toString()).into(nextDayThreeWeatherImage);
+
+        BitmapDrawable drawable3 = (BitmapDrawable) nextDayThreeWeatherImage.getDrawable();
+        Bitmap bitmap3 = drawable3.getBitmap();
+
+        directory = ReadWriteClass.saveToInternalStorage((MainActivity)getActivity(), bitmap3, filenameImg3);
 
 
         Picasso.get().load(new StringBuilder("https://openweathermap.org/img/wn/")
                 .append(weatherForecastResult.daily.get(4).weather.get(0).getIcon())
                 .append(".png").toString()).into(nextDayFourWeatherImage);
+
+        BitmapDrawable drawable4 = (BitmapDrawable) nextDayFourWeatherImage.getDrawable();
+        Bitmap bitmap4 = drawable4.getBitmap();
+
+        directory = ReadWriteClass.saveToInternalStorage((MainActivity)getActivity(), bitmap4, filenameImg4);
+
+        Log.d("DIR", directory);
 
         if(unit.equals("metric")) {
             nextDayOneTempText.setText(new StringBuilder(String.valueOf(weatherForecastResult.daily.get(1).temp.day))

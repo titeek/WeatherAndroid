@@ -1,7 +1,11 @@
 package com.example.astroweather;
 
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -33,6 +37,10 @@ import com.squareup.picasso.Picasso;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -52,7 +60,11 @@ public class GeneralFragment extends Fragment {
 
     private Handler handlerTime = new Handler();
 
-    String filename = "weatherGeneral.txt";
+    private StringBuilder weatherInformation = new StringBuilder("");
+    private String filename = "weatherGeneral.txt";
+    private String directory;
+    private String filenameImg = "weather.jpg";
+    private String path = "/data/user/0/com.example.astroweather/app_weatherImages/";
 
     ImageView imageWeather;
     TextView coordText, cityText, temperatureText, pressureText, descriptionText;
@@ -62,7 +74,7 @@ public class GeneralFragment extends Fragment {
 
     IOpenWeatherMap mService;
     CompositeDisposable compositeDisposable;
-    StringBuilder weatherInformation = new StringBuilder("");
+
 
     public GeneralFragment() {
         compositeDisposable = new CompositeDisposable();
@@ -125,6 +137,13 @@ public class GeneralFragment extends Fragment {
                                     .append(weatherResult.getWeather().get(0).getIcon())
                                     .append(".png").toString()).into(imageWeather);
 
+                            BitmapDrawable drawable = (BitmapDrawable) imageWeather.getDrawable();
+                            Bitmap bitmap = drawable.getBitmap();
+
+                            directory = ReadWriteClass.saveToInternalStorage((MainActivity)getActivity(), bitmap, filenameImg);
+
+                            Log.d("DIR", directory);
+
                             //Load info
                             cityText.setText(weatherResult.getName());
 
@@ -153,12 +172,12 @@ public class GeneralFragment extends Fragment {
 
                             Log.d("XXX", weatherInformation.toString());
 
-                            loading.setVisibility(View.GONE);
-                            weatherPanel.setVisibility(View.VISIBLE);
+
 
                             ReadWriteClass.writeToFile(weatherInformation.toString(), (MainActivity)getActivity(), filename);
 
-
+                            loading.setVisibility(View.GONE);
+                            weatherPanel.setVisibility(View.VISIBLE);
 
                         }
                     }, new Consumer<Throwable>() {
@@ -190,6 +209,16 @@ public class GeneralFragment extends Fragment {
                 temperatureText.setText(informationList[3]);
                 pressureText.setText(informationList[4]);
                 coordText.setText(informationList[5]);
+
+                try {
+                    File f=new File(path, filenameImg);
+                    Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+                    imageWeather.setImageBitmap(b);
+                }
+                catch (FileNotFoundException e)
+                {
+                    e.printStackTrace();
+                }
             }
 
         }
