@@ -130,7 +130,7 @@ public class WindFragment extends Fragment {
                                     .append(cloudText.getText()).append(",")
                                     .append(visibilityText.getText()).append(",");
 
-                            Log.d("XXX", weatherInformation.toString());
+                            //Log.d("XXX", weatherInformation.toString());
 
                             loading.setVisibility(View.GONE);
                             weatherPanel.setVisibility(View.VISIBLE);

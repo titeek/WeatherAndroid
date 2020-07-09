@@ -110,8 +110,7 @@ public class GeneralFragment extends Fragment {
 
         Context context = (MainActivity)getActivity();
 
-        ConnectivityManager cm =
-                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         boolean isConnected = activeNetwork != null &&
@@ -137,13 +136,6 @@ public class GeneralFragment extends Fragment {
                                     .append(weatherResult.getWeather().get(0).getIcon())
                                     .append(".png").toString()).into(imageWeather);
 
-                            BitmapDrawable drawable = (BitmapDrawable) imageWeather.getDrawable();
-                            Bitmap bitmap = drawable.getBitmap();
-
-                            directory = ReadWriteClass.saveToInternalStorage((MainActivity)getActivity(), bitmap, filenameImg);
-
-                            Log.d("DIR", directory);
-
                             //Load info
                             cityText.setText(weatherResult.getName());
 
@@ -162,6 +154,10 @@ public class GeneralFragment extends Fragment {
 
                             coordText.setText(new StringBuilder("").append(weatherResult.getCoord().toString()).append("").toString());
 
+                            weatherPanel.setVisibility(View.VISIBLE);
+                            loading.setVisibility(View.GONE);
+
+
                             weatherInformation
                                     .append(",")
                                     .append(cityText.getText()).append(",")
@@ -170,7 +166,14 @@ public class GeneralFragment extends Fragment {
                                     .append(pressureText.getText()).append(",")
                                     .append(coordText.getText()).append(",");
 
-                            Log.d("XXX", weatherInformation.toString());
+                            BitmapDrawable drawable = (BitmapDrawable) imageWeather.getDrawable();
+                            Bitmap bitmap = drawable.getBitmap();
+
+                            directory = ReadWriteClass.saveToInternalStorage((MainActivity)getActivity(), bitmap, filenameImg);
+
+                            Log.d("DIR", directory);
+
+                            //Log.d("XXX", weatherInformation.toString());
 
 
 

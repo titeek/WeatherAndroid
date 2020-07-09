@@ -145,7 +145,7 @@ public class NextDaysFragment extends Fragment {
                                     .append(nextDayThreeText.getText()).append(",")
                                     .append(nextDayFourText.getText()).append(",");
 
-                            Log.d("XXX", weatherInformation.toString());
+                            //Log.d("XXX", weatherInformation.toString());
 
                             ReadWriteClass.writeToFile(weatherInformation.toString(), (MainActivity)getActivity(), filename);
 
